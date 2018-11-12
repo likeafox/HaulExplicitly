@@ -21,8 +21,15 @@ namespace HaulExplicitly
     }
 
     [HarmonyPatch(typeof(ThingWithComps), "GetGizmos")]
-    class ThingWithComps_GetGizmos_Patch : Thing_GetGizmos_Patch
+    class ThingWithComps_GetGizmos_Patch
     {
+        static IEnumerable<Gizmo> Postfix(IEnumerable<Gizmo> gizmos, Thing __instance)
+        {
+            foreach (Gizmo gizmo in gizmos)
+                yield return gizmo;
+            foreach (Gizmo gizmo in GizmoUtility.GetHaulExplicitlyGizmos(__instance))
+                yield return gizmo;
+        }
     }
 
     [HarmonyPatch(typeof(Designator_Haul), "DesignateThing")]
