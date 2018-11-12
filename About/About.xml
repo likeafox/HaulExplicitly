@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>Haul Explicitly</name>
+  <author>likeafox</author>
+  <!--<url>http://example.com</url>-->
+  <targetVersion>1.0.2059</targetVersion>
+  <description>Finer control over where your items go.</description>
+</ModMetaData>
