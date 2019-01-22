@@ -35,12 +35,32 @@ namespace HaulExplicitly
         public override void ExposeData()
         {
             base.ExposeData();
+
+            //clean-up
             if (Scribe.mode == LoadSaveMode.Saving)
                 CleanGarbage();
+
+            //deal with save format version updates
+            int savegameFormatVersion = 1; // format version of the currently executing code
+            Scribe_Values.Look(ref savegameFormatVersion, "savegameFormatVersion", 0);
+            if (Scribe.mode == LoadSaveMode.LoadingVars)
+            {
+                //do updating of document format here
+            }
+
+            //regular saving/loading
             Scribe_Collections.Look(ref managers, "managers",
                 LookMode.Value, LookMode.Deep//, ref mapIdsScribe, ref managersScribe
                 );
             Scribe_Collections.Look(ref retainingZones, "holdingZones", LookMode.Reference);
+
+            //hopefully this will allow at least some limited recovery from this issue:
+            // https://gist.github.com/HugsLibRecordKeeper/c04dca50bda4e311e81c9e4c9666ccc1
+            if (managers == null)
+            {
+                managers = new Dictionary<int, HaulExplicitlyJobManager>();
+                Log.Error("Haul Explicitly job managers were not loaded.  Were there errors the last time the game was saved?");
+            }
         }
 
         public HaulExplicitly(Game game) : this() { }

@@ -40,7 +40,19 @@ namespace HaulExplicitly
                     JobFailReason.Is("ForbiddenLower".Translate(), null);
                 return false;
             }
-            __result = t.IsAHaulableSetToHaulable() && Verse.AI.HaulAIUtility.PawnCanAutomaticallyHaulFast(p, t, forced);
+            __result = Verse.AI.HaulAIUtility.PawnCanAutomaticallyHaulFast(p, t, forced);
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(HaulAIUtility), "PawnCanAutomaticallyHaulFast")]
+    class HaulAIUtility_PawnCanAutomaticallyHaulFast_Patch
+    {
+        static bool Prefix(Pawn p, Thing t, bool forced, ref bool __result)
+        {
+            if (t.IsAHaulableSetToHaulable())
+                return true;
+            __result = false;
             return false;
         }
     }
