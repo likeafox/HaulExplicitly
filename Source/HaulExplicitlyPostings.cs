@@ -10,33 +10,48 @@ using Harmony;
 
 namespace HaulExplicitly
 {
+    public class ItemMixTypeInfo : IExposable
+    {
+        public Thing example;
+        public ThingDef def, stuffDef, miniDef;
+
+        public void ExposeData()
+        {
+            Scribe_Defs.Look(ref def, "def");
+            Scribe_Defs.Look(ref stuffDef, "stuffDef");
+            Scribe_Defs.Look(ref miniDef, "minifiableDef");
+
+            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            {
+                example = null;
+            }
+        }
+
+        public ItemMixTypeInfo() { }
+        public ItemMixTypeInfo(Thing basis)
+        {
+            example = null;
+            def = basis.def;
+            stuffDef = basis.Stuff;
+            miniDef = (basis as MinifiedThing)?.InnerThing.def;
+        }
+
+        public bool CanMixIn(Thing t)
+        {
+            return (t.def.category == ThingCategory.Item
+                && def == t.def
+                && stuffDef == t.Stuff
+                && miniDef == (t as MinifiedThing)?.InnerThing.def);
+        }
+    }
     public class HaulExplicitlyInventoryRecord : IExposable
     {
         //data
-        private System.WeakReference _parentPosting;
-        public HaulExplicitlyPosting parentPosting
-        {
-            get
-            {
-                try { return (HaulExplicitlyPosting)_parentPosting.Target; } catch { }
-                foreach (var mgr in HaulExplicitly.GetManagers())
-                    foreach (var posting in mgr.postings.Values)
-                        if (posting.inventory.Contains(this))
-                            return (HaulExplicitlyPosting)(_parentPosting = new WeakReference(posting)).Target;
-                throw new NullReferenceException("Orphaned HaulExplicitlyInventoryRecord");
-            }
-        }
         public List<Thing> items = new List<Thing>();
-        private ThingDef _itemDef;
-        public ThingDef itemDef { get { return _itemDef; } private set { _itemDef = value; } }
-        private ThingDef _itemStuff;
-        public ThingDef itemStuff { get { return _itemStuff; } private set { _itemStuff = value; } }
-        private ThingDef _miniDef;
-        public ThingDef miniDef { get { return _miniDef; } private set { _miniDef = value; } }
         private int _selectedQuantity;
         public int selectedQuantity { get { return _selectedQuantity; } private set { _selectedQuantity = value; } }
         private int _playerSetQuantity = -1;
-        public int setQuantity
+        public int QuantityToMove
         {
             get { return (_playerSetQuantity == -1) ? selectedQuantity : _playerSetQuantity; }
             set
@@ -50,23 +65,34 @@ namespace HaulExplicitly
         {
             get { return _playerSetQuantity != -1; }
         }
-        private int _mergeCapacity;
+        public int movedQuantity = 0;
+        /*private System.WeakReference _parentPosting;
+        public HaulExplicitlyPosting parentPosting
+        {
+            get
+            {
+                try { return (HaulExplicitlyPosting)_parentPosting.Target; } catch { }
+                foreach (var mgr in HaulExplicitly.GetManagers())
+                    foreach (var posting in mgr.postings.Values)
+                        if (posting.inventory.Contains(this))
+                            return (HaulExplicitlyPosting)(_parentPosting = new WeakReference(posting)).Target;
+                throw new NullReferenceException("Orphaned HaulExplicitlyInventoryRecord");
+            }
+        }*/
+        /*private int _mergeCapacity;
         public int mergeCapacity { get { return _mergeCapacity; } private set { _mergeCapacity = value; } }
         private int _numMergeStacksWillUse;
         public int numMergeStacksWillUse { get { return _numMergeStacksWillUse; } private set { _numMergeStacksWillUse = value; } }
-        public int movedQuantity = 0;
+        */
 
         //
         public void ExposeData()
         {
             Scribe_Collections.Look(ref items, "items", LookMode.Reference);
-            Scribe_Defs.Look(ref _itemDef, "itemDef");
-            Scribe_Defs.Look(ref _itemStuff, "itemStuff");
-            Scribe_Defs.Look(ref _miniDef, "minifiableDef");
             Scribe_Values.Look(ref _selectedQuantity, "selectedQuantity");
             Scribe_Values.Look(ref _playerSetQuantity, "setQuantity");
-            Scribe_Values.Look(ref _mergeCapacity, "mergeCapacity");
-            Scribe_Values.Look(ref _numMergeStacksWillUse, "numMergeStacksWillUse");
+            //Scribe_Values.Look(ref _mergeCapacity, "mergeCapacity");
+            //Scribe_Values.Look(ref _numMergeStacksWillUse, "numMergeStacksWillUse");
             Scribe_Values.Look(ref movedQuantity, "movedQuantity");
         }
 
@@ -74,16 +100,13 @@ namespace HaulExplicitly
         public HaulExplicitlyInventoryRecord() { }
         public HaulExplicitlyInventoryRecord(Thing initial, HaulExplicitlyPosting parentPosting)
         {
-            _parentPosting = new System.WeakReference(parentPosting);
+            //_parentPosting = new System.WeakReference(parentPosting);
             items.Add(initial);
-            itemDef = initial.def;
-            itemStuff = initial.Stuff;
-            miniDef = (initial as MinifiedThing)?.InnerThing.def;
             selectedQuantity = initial.stackCount;
-            ResetMerge();
+            //ResetMerge();
         }
 
-        public void ResetMerge()
+        /*public void ResetMerge()
         {
             mergeCapacity = 0;
             numMergeStacksWillUse = 0;
@@ -93,9 +116,9 @@ namespace HaulExplicitly
         {
             numMergeStacksWillUse++;
             mergeCapacity += itemDef.stackLimit - itemQuantity;
-        }
+        }*/
 
-        public static int StacksWorth(ThingDef td, int quantity)
+        /*public static int StacksWorth(ThingDef td, int quantity)
         {
             return (quantity / td.stackLimit) + ((quantity % td.stackLimit == 0) ? 0 : 1);
         }
@@ -103,24 +126,17 @@ namespace HaulExplicitly
         public int numStacksWillUse
         {
             get { return StacksWorth(itemDef, Math.Max(0, setQuantity - mergeCapacity)) + numMergeStacksWillUse; }
-        }
-
-        public bool CanMixWith(Thing t)
-        {
-            return (t.def.category == ThingCategory.Item
-                && itemDef == t.def
-                && itemStuff == t.Stuff
-                && miniDef == (t as MinifiedThing)?.InnerThing.def);
-        }
+        }*/
 
         public bool hasItem(Thing t)
         {
             return items.Contains(t);
         }
 
+        //this should just be AddItem, and throw an exception if it fails
         public bool TryAddItem(Thing t, bool sideEffects = true)
         {
-            if (!CanMixWith(t))
+            if (!CanMixWith(t) || hasItem(t))
                 return false;
             items.Add(t);
             if (sideEffects)
@@ -181,6 +197,11 @@ namespace HaulExplicitly
             foreach (Thing t in HaulExplicitly.GetManager(map).haulables)
                 referencedThings.Add(t);
         }
+    }
+
+    public class HaulExplicitlyInventory : IExposable
+    {
+
     }
 
     public enum HaulExplicitlyStatus : byte
@@ -276,8 +297,9 @@ namespace HaulExplicitly
             Log.Error("TryAddItemSplinter failed to find matching record for " + t);
             return false;
         found:
+            if (!recordfinder.Current.TryAddItem(t, false))
+                throw new Exception("The HaulExplicitlyPosting was found to be in an inconsistent state.");
             items.Add(t);
-            recordfinder.Current.TryAddItem(t, false);
             return true;
         }
 
