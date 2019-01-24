@@ -48,12 +48,9 @@ namespace HaulExplicitly
     [HarmonyPatch(typeof(HaulAIUtility), "PawnCanAutomaticallyHaulFast")]
     class HaulAIUtility_PawnCanAutomaticallyHaulFast_Patch
     {
-        static bool Prefix(Pawn p, Thing t, bool forced, ref bool __result)
+        static void Postfix(Thing t, ref bool __result)
         {
-            if (t.IsAHaulableSetToHaulable())
-                return true;
-            __result = false;
-            return false;
+            __result = __result && t.IsAHaulableSetToHaulable();
         }
     }
 
