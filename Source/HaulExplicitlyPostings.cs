@@ -13,27 +13,28 @@ namespace HaulExplicitly
     public class ItemMixTypeInfo : IExposable
     {
         public Thing example;
+        public int id;
         public ThingDef def, stuffDef, miniDef;
 
         public void ExposeData()
         {
+            Scribe_Values.Look(ref id, "id");
             Scribe_Defs.Look(ref def, "def");
             Scribe_Defs.Look(ref stuffDef, "stuffDef");
             Scribe_Defs.Look(ref miniDef, "minifiableDef");
 
             if (Scribe.mode == LoadSaveMode.PostLoadInit)
-            {
-                example = null;
-            }
+                makeExample();
         }
 
         public ItemMixTypeInfo() { }
-        public ItemMixTypeInfo(Thing basis)
+        public ItemMixTypeInfo(int id, Thing basis)
         {
-            example = null;
+            this.id = id;
             def = basis.def;
             stuffDef = basis.Stuff;
             miniDef = (basis as MinifiedThing)?.InnerThing.def;
+            makeExample();
         }
 
         public bool CanMixIn(Thing t)
@@ -43,105 +44,107 @@ namespace HaulExplicitly
                 && stuffDef == t.Stuff
                 && miniDef == (t as MinifiedThing)?.InnerThing.def);
         }
+
+        private void makeExample()
+        {
+            example = ThingMaker.MakeThing(def, stuffDef);
+        }
+
+        public int StacksWorth(int quantity)
+        {
+            return (quantity / def.stackLimit) + ((quantity % def.stackLimit == 0) ? 0 : 1);
+        }
     }
+
+    public class ItemMixTypeDatabase : IExposable
+    {
+        private List<ItemMixTypeInfo> types = new List<ItemMixTypeInfo>();
+
+        public void ExposeData()
+        {
+            Scribe_Collections.Look(ref types, "types", LookMode.Deep);
+        }
+
+        public ItemMixTypeDatabase() { }
+
+        public ItemMixTypeInfo Lookup(int id)
+        {
+            return types[id];
+        }
+
+        public ItemMixTypeInfo Lookup(Thing t)
+        {
+            foreach (var info in types)
+                if (info.CanMixIn(t))
+                    return info;
+            var r = new ItemMixTypeInfo(types.Count, t);
+            types.Add(r);
+            return r;
+        }
+    }
+
     public class HaulExplicitlyInventoryRecord : IExposable
     {
         //data
+        private int _mixTypeId;
+        public ItemMixTypeInfo mixType = null;
         public List<Thing> items = new List<Thing>();
         private int _selectedQuantity;
-        public int selectedQuantity { get { return _selectedQuantity; } private set { _selectedQuantity = value; } }
+        public int SelectedQuantity { get { return _selectedQuantity; } private set { _selectedQuantity = value; } }
         private int _playerSetQuantity = -1;
-        public int QuantityToMove
-        {
-            get { return (_playerSetQuantity == -1) ? selectedQuantity : _playerSetQuantity; }
+        public int QuantityToMove {
+            get { return (_playerSetQuantity == -1) ? SelectedQuantity : _playerSetQuantity; }
             set
             {
-                if (value < 0 || value > selectedQuantity)
+                if (value < 0 || value > SelectedQuantity)
                     throw new ArgumentOutOfRangeException();
                 _playerSetQuantity = (int)value;
             }
         }
-        public bool PlayerChangedQuantity
-        {
+        public bool PlayerChangedQuantity {
             get { return _playerSetQuantity != -1; }
         }
         public int movedQuantity = 0;
-        /*private System.WeakReference _parentPosting;
-        public HaulExplicitlyPosting parentPosting
-        {
-            get
-            {
-                try { return (HaulExplicitlyPosting)_parentPosting.Target; } catch { }
-                foreach (var mgr in HaulExplicitly.GetManagers())
-                    foreach (var posting in mgr.postings.Values)
-                        if (posting.inventory.Contains(this))
-                            return (HaulExplicitlyPosting)(_parentPosting = new WeakReference(posting)).Target;
-                throw new NullReferenceException("Orphaned HaulExplicitlyInventoryRecord");
-            }
-        }*/
-        /*private int _mergeCapacity;
-        public int mergeCapacity { get { return _mergeCapacity; } private set { _mergeCapacity = value; } }
-        private int _numMergeStacksWillUse;
-        public int numMergeStacksWillUse { get { return _numMergeStacksWillUse; } private set { _numMergeStacksWillUse = value; } }
-        */
 
         //
         public void ExposeData()
         {
+            if (Scribe.mode == LoadSaveMode.Saving)
+                _mixTypeId = mixType.id;
+            else if (Scribe.mode == LoadSaveMode.PostLoadInit)
+                mixType = HaulExplicitly.ItemMixTypeDB.Lookup(_mixTypeId);
+            Scribe_Values.Look(ref _mixTypeId, "mixTypeId");
+
             Scribe_Collections.Look(ref items, "items", LookMode.Reference);
             Scribe_Values.Look(ref _selectedQuantity, "selectedQuantity");
             Scribe_Values.Look(ref _playerSetQuantity, "setQuantity");
-            //Scribe_Values.Look(ref _mergeCapacity, "mergeCapacity");
-            //Scribe_Values.Look(ref _numMergeStacksWillUse, "numMergeStacksWillUse");
             Scribe_Values.Look(ref movedQuantity, "movedQuantity");
         }
 
         //methods
         public HaulExplicitlyInventoryRecord() { }
-        public HaulExplicitlyInventoryRecord(Thing initial, HaulExplicitlyPosting parentPosting)
+        public HaulExplicitlyInventoryRecord(Thing initial)
         {
-            //_parentPosting = new System.WeakReference(parentPosting);
+            mixType = HaulExplicitly.ItemMixTypeDB.Lookup(initial);
             items.Add(initial);
-            selectedQuantity = initial.stackCount;
-            //ResetMerge();
+            SelectedQuantity = initial.stackCount;
         }
-
-        /*public void ResetMerge()
-        {
-            mergeCapacity = 0;
-            numMergeStacksWillUse = 0;
-        }
-
-        public void AddMergeCell(int itemQuantity)
-        {
-            numMergeStacksWillUse++;
-            mergeCapacity += itemDef.stackLimit - itemQuantity;
-        }*/
-
-        /*public static int StacksWorth(ThingDef td, int quantity)
-        {
-            return (quantity / td.stackLimit) + ((quantity % td.stackLimit == 0) ? 0 : 1);
-        }
-
-        public int numStacksWillUse
-        {
-            get { return StacksWorth(itemDef, Math.Max(0, setQuantity - mergeCapacity)) + numMergeStacksWillUse; }
-        }*/
 
         public bool hasItem(Thing t)
         {
             return items.Contains(t);
         }
 
-        //this should just be AddItem, and throw an exception if it fails
-        public bool TryAddItem(Thing t, bool sideEffects = true)
+        public void AddItem(Thing t, bool sideEffects = true)
         {
-            if (!CanMixWith(t) || hasItem(t))
-                return false;
+            if (!mixType.CanMixIn(t))
+                throw new ArgumentException("Record with mixType.id=" + mixType.id +
+                    " cannot accept " + t.ToString());
+            if (hasItem(t))
+                throw new ArgumentException(t.ToString() + " already exists in this record.");
             items.Add(t);
             if (sideEffects)
-                selectedQuantity += t.stackCount;
-            return true;
+                SelectedQuantity += t.stackCount;
         }
 
         public bool TryRemoveItem(Thing t, bool playerCancelled = false)
@@ -149,35 +152,87 @@ namespace HaulExplicitly
             bool r = items.Remove(t);
             if (r && playerCancelled)
             {
-                selectedQuantity -= t.stackCount;
-                _playerSetQuantity = Math.Min(_playerSetQuantity, selectedQuantity);
+                SelectedQuantity -= t.stackCount;
+                if (SelectedQuantity < 0)
+                    Log.Error("HaulExplicitlyInventoryRecord.TryRemoveItem(): Selected quantity less than zero.");
+                _playerSetQuantity = Math.Min(_playerSetQuantity, SelectedQuantity);
             }
             return r;
-        }
-
-        public int RemainingToHaul()
-        {
-            var pawns_list = new List<Pawn>(parentPosting.map.mapPawns.PawnsInFaction(Faction.OfPlayer));
-            int beingHauledNow = 0;
-            foreach (Pawn p in pawns_list)
-            {
-                try
-                {
-                    if (p.jobs.curJob.def.driverClass == typeof(JobDriver_HaulExplicitly)
-                        && this == ((JobDriver_HaulExplicitly)p.jobs.curDriver).record)
-                        beingHauledNow += p.jobs.curJob.count;
-                }
-                catch { }
-            }
-            return Math.Max(0, setQuantity - (movedQuantity + beingHauledNow));
         }
 
         public string Label
         {
             get
             {
-                return GenLabel.ThingLabel(miniDef ?? itemDef, itemStuff, setQuantity).CapitalizeFirst();
+                return GenLabel.ThingLabel(mixType.miniDef ?? mixType.def, mixType.stuffDef, QuantityToMove).CapitalizeFirst();
             }
+        }
+    }
+
+    public class HaulExplicitlyInventory : IExposable
+    {
+        public Dictionary<int, HaulExplicitlyInventoryRecord> records =
+            new Dictionary<int, HaulExplicitlyInventoryRecord>();
+        public Map map;
+
+        public void ExposeData()
+        {
+            Scribe_Collections.Look(ref records, "records", LookMode.Deep);
+            Scribe_References.Look(ref map, "map", true);
+        }
+
+        public HaulExplicitlyInventory() { }
+        public HaulExplicitlyInventory(IEnumerable<object> objects)
+        {
+            map = null;
+            foreach (object o in objects)
+            {  
+                Thing t = o as Thing;
+                if (t == null || !t.def.EverHaulable)
+                    continue;
+                map = map ?? t.MapHeld;
+                AddItem(t);
+            }
+
+            if (map == null)
+                throw new ArgumentException("None of the objects are in a Map.");
+        }
+
+        public HaulExplicitlyInventoryRecord GetApplicableRecordFor(Thing t)
+        {
+            int mixTypeId = HaulExplicitly.ItemMixTypeDB.Lookup(t).id;
+            HaulExplicitlyInventoryRecord r;
+            records.TryGetValue(mixTypeId, out r);
+            return r;
+        }
+
+        public void AddItem(Thing t)
+        {
+            int mixTypeId = HaulExplicitly.ItemMixTypeDB.Lookup(t).id;
+            if (records.ContainsKey(mixTypeId))
+                records[mixTypeId].AddItem(t);
+            else
+                records[mixTypeId] = new HaulExplicitlyInventoryRecord(t);
+        }
+
+        public int RemainingToHaul(int mixTypeId)
+        {
+            if (!records.ContainsKey(mixTypeId))
+                return 0;
+            var record = records[mixTypeId];
+            var pawns_list = new List<Pawn>(map.mapPawns.PawnsInFaction(Faction.OfPlayer));
+            int beingHauledNow = 0;
+            foreach (Pawn p in pawns_list)
+            {
+                try
+                {
+                    if (p.jobs.curJob.def.driverClass == typeof(JobDriver_HaulExplicitly)
+                        && record == ((JobDriver_HaulExplicitly)p.jobs.curDriver).record)
+                        beingHauledNow += p.jobs.curJob.count;
+                }
+                catch { }
+            }
+            return Math.Max(0, record.QuantityToMove - (record.movedQuantity + beingHauledNow));
         }
     }
 
@@ -199,9 +254,134 @@ namespace HaulExplicitly
         }
     }
 
-    public class HaulExplicitlyInventory : IExposable
+    public class HaulExplicitlyMergeInfo : IExposable
     {
+        public int capacity = 0;
+        public int stacks = 0;
 
+        public void ExposeData()
+        {
+            Scribe_Values.Look(ref capacity, "capacity");
+            Scribe_Values.Look(ref stacks, "stacks");
+        }
+    }
+
+    public interface IDestinationProspects
+    {
+        IEnumerable<IntVec3> Prospects { get; }
+        Map Map { get; }
+    }
+
+    public class HaulExplicitlyDestination : IExposable, IDestinationProspects
+    {
+        //data
+        private List<IntVec3> _cells = new List<IntVec3>();
+        private Dictionary<int, HaulExplicitlyMergeInfo> _mergeInfos = new Dictionary<int, HaulExplicitlyMergeInfo>();
+        private Map map;
+
+        public List<IntVec3> Cells { get { return _cells; } }
+        public HaulExplicitlyMergeInfo GetMergeInfo(int itemMixTypeId)
+        {
+            try { return _mergeInfos[itemMixTypeId]; }
+            catch (KeyNotFoundException) { return _mergeInfos[itemMixTypeId] = new HaulExplicitlyMergeInfo(); }
+        }
+
+        //interface impl.
+        public void ExposeData()
+        {
+            Scribe_Collections.Look(ref _cells, "destinations", LookMode.Value);
+            Scribe_Collections.Look(ref _mergeInfos, "mergeInfos", LookMode.Deep);
+            Scribe_References.Look(ref map, "map", true);
+        }
+
+        public IEnumerable<IntVec3> Prospects { get { return _cells; } }
+        public Map Map { get { return map; } }
+
+        //functions
+        public HaulExplicitlyDestination(HaulExplicitlyInventory inventory, IDestinationProspects prospects,
+            int stopAtAdditionalNeeded=0)
+        {
+            if (inventory.map != prospects.Map)
+                throw new ArgumentException("inventory and prospects use different Maps");
+            map = inventory.map;
+
+            foreach (IntVec3 cell in prospects.Prospects)
+            {
+                if (NumAdditionalStacksNeeded(inventory) <= stopAtAdditionalNeeded)
+                    break;
+                List<Thing> items_in_cell = GetItemsIfValidItemSpot(map, cell);
+                if (map.reservationManager.IsReservedByAnyoneOf(cell, Faction.OfPlayer)
+                    || items_in_cell == null)
+                    continue;
+
+                if (items_in_cell.Count == 0)
+                {
+                    Cells.Add(cell);
+                }
+                else
+                {
+                    Thing item = items_in_cell.First();
+                    //probably not necessary-- commented out for future reference:
+                    //if (map.reservationManager.IsReservedByAnyoneOf(item, Faction.OfPlayer))
+                    //    continue;
+                    HaulExplicitlyInventoryRecord record = inventory.GetApplicableRecordFor(item);
+                    if (items_in_cell.Count == 1
+                        && record?.hasItem(item) == false //an item of this type exists in inventory but not this specific item
+                        && item.stackCount != record.mixType.def.stackLimit)
+                    {
+                        Cells.Add(cell);
+                        AccountForMergeStack(record.mixType, item.stackCount);
+                    }
+                }
+            }
+        }
+
+        public static List<Thing> GetItemsIfValidItemSpot(Map map, IntVec3 cell)
+        {
+            //references used for this function (referenced during Rimworld 0.19):
+            // Designation_ZoneAddStockpile.CanDesignateCell
+            // StoreUtility.IsGoodStoreCell
+            var result = new List<Thing>();
+            if (!cell.InBounds(map)
+                || cell.Fogged(map)
+                || cell.InNoZoneEdgeArea(map)
+                || cell.GetTerrain(map).passability == Traversability.Impassable
+                || cell.ContainsStaticFire(map))
+                return null;
+            List<Thing> things = map.thingGrid.ThingsListAt(cell);
+            foreach (Thing thing in things)
+            {
+                if (!thing.def.CanOverlapZones
+                    || (thing.def.entityDefToBuild != null
+                        && thing.def.entityDefToBuild.passability != Traversability.Standable)
+                    || (thing.def.surfaceType == SurfaceType.None
+                        && thing.def.passability != Traversability.Standable))
+                    return null;
+                if (thing.def.EverStorable(false))
+                    result.Add(thing);
+            }
+            return result;
+        }
+
+        private void AccountForMergeStack(ItemMixTypeInfo itemMixType, int itemQuantity)
+        {
+            var merge = GetMergeInfo(itemMixType.id);
+            merge.stacks++;
+            merge.capacity += itemMixType.def.stackLimit - itemQuantity;
+        }
+
+        public int StacksRecordWillUse(HaulExplicitlyInventoryRecord record)
+        {
+            HaulExplicitlyMergeInfo merge = GetMergeInfo(record.mixType.id);
+            int empty_cell_use = record.mixType.StacksWorth(Math.Max(0, record.QuantityToMove - merge.capacity));
+            return empty_cell_use + merge.stacks;
+        }
+
+        public int NumAdditionalStacksNeeded(HaulExplicitlyInventory inventory)
+        {
+            int totalStacksNeeded = inventory.records.Values.Sum(r => StacksRecordWillUse(r));
+            return totalStacksNeeded - Cells.Count;
+        }
     }
 
     public enum HaulExplicitlyStatus : byte
@@ -217,11 +397,11 @@ namespace HaulExplicitly
     public class HaulExplicitlyPosting : IExposable
     {
         private int _id;
-        private Map _map;
+        //private Map _map;
         public int id { get { return _id; } private set { _id = value; } }
-        public Map map { get { return _map; } private set { _map = value; } }
-        public List<HaulExplicitlyInventoryRecord> inventory = new List<HaulExplicitlyInventoryRecord>();
-        public List<Thing> items = new List<Thing>();
+        //public Map map { get { return _map; } private set { _map = value; } }
+        //public List<HaulExplicitlyInventoryRecord> inventory = new List<HaulExplicitlyInventoryRecord>();
+        //public List<Thing> items = new List<Thing>();
         public List<IntVec3> destinations = null;
 
         public Vector3? cursor = null;
@@ -230,22 +410,22 @@ namespace HaulExplicitly
 
         public void ExposeData()
         {
-            Scribe_Values.Look(ref _id, "postingId");
-            Scribe_References.Look(ref _map, "map", true);
-            Scribe_Collections.Look(ref inventory, "inventory", LookMode.Deep);
+            //Scribe_Values.Look(ref _id, "postingId");
+            //Scribe_References.Look(ref _map, "map", true);
+            //Scribe_Collections.Look(ref inventory, "inventory", LookMode.Deep);
             Scribe_Collections.Look(ref destinations, "destinations", LookMode.Value);
             Scribe_Values.Look(ref cursor, "cursor");
             Scribe_Values.Look(ref center, "center");
             Scribe_Values.Look(ref visualization_radius, "visualizationRadius");
 
-            if (Scribe.mode == LoadSaveMode.PostLoadInit)
+            /*if (Scribe.mode == LoadSaveMode.PostLoadInit)
             {
                 ReloadItemsFromInventory();
-            }
+            }*/
         }
 
         public HaulExplicitlyPosting() { }
-        public HaulExplicitlyPosting(IEnumerable<object> objects)
+        /*public HaulExplicitlyPosting(IEnumerable<object> objects)
         {
             id = HaulExplicitly.GetNewPostingID();
             map = Find.CurrentMap;
@@ -262,7 +442,7 @@ namespace HaulExplicitly
                 inventory.Add(new HaulExplicitlyInventoryRecord(t, this));
             match: { }
             }
-        }
+        }*/
 
         public bool TryRemoveItem(Thing t, bool playerCancelled = false)
         {
@@ -339,15 +519,15 @@ namespace HaulExplicitly
             throw new NotImplementedException();
         }
 
-        private bool IsPossibleItemDestination(IntVec3 c)
+        private static bool IsPossibleItemDestination(Map map, IntVec3 c)
         {
-            if (!c.InBounds(this.map)
-                || c.Fogged(this.map)
-                || c.InNoZoneEdgeArea(this.map)
-                || c.GetTerrain(this.map).passability == Traversability.Impassable
+            if (!c.InBounds(map)
+                || c.Fogged(map)
+                || c.InNoZoneEdgeArea(map)
+                || c.GetTerrain(map).passability == Traversability.Impassable
                     )
                 return false;
-            foreach (Thing t in this.map.thingGrid.ThingsAt(c))
+            foreach (Thing t in map.thingGrid.ThingsAt(c))
             {
                 if (!t.def.CanOverlapZones || t.def.passability == Traversability.Impassable || t.def.IsDoor)
                     return false;
@@ -355,7 +535,7 @@ namespace HaulExplicitly
             return true;
         }
 
-        private IEnumerable<IntVec3> PossibleItemDestinationsAtCursor(Vector3 cursor)
+        private static IEnumerable<IntVec3> PossibleItemDestinationsAtCursor(Vector3 cursor)
         {
             IntVec3 cursor_cell = new IntVec3(cursor);
             var cardinals = new IntVec3[] {
@@ -393,7 +573,7 @@ namespace HaulExplicitly
             }
         }
 
-        public bool TryMakeDestinations(Vector3 cursor, bool try_be_lazy = true)
+        /*public bool TryMakeDestinations(Vector3 cursor, bool try_be_lazy = true)
         {
             if (try_be_lazy && cursor == this.cursor)
                 return destinations != null;
@@ -457,85 +637,7 @@ namespace HaulExplicitly
             }
             destinations = null;
             return false;
-        }
-
-        public static List<Thing> GetItemsIfValidItemSpot(Map map, IntVec3 cell)
-        {
-            //references used for this function (referenced during Rimworld 0.19):
-            // Designation_ZoneAddStockpile.CanDesignateCell
-            // StoreUtility.IsGoodStoreCell
-            var result = new List<Thing>();
-            if (!cell.InBounds(map)
-                || cell.Fogged(map)
-                || cell.InNoZoneEdgeArea(map)
-                || cell.GetTerrain(map).passability == Traversability.Impassable
-                || cell.ContainsStaticFire(map))
-                return null;
-            List<Thing> things = map.thingGrid.ThingsListAt(cell);
-            foreach (Thing thing in things)
-            {
-                if (!thing.def.CanOverlapZones
-                    || (thing.def.entityDefToBuild != null
-                        && thing.def.entityDefToBuild.passability != Traversability.Standable)
-                    || (thing.def.surfaceType == SurfaceType.None
-                        && thing.def.passability != Traversability.Standable))
-                    return null;
-                if (thing.def.EverStorable(false))
-                    result.Add(thing);
-            }
-            return result;
-        }
-
-        internal string stringy_details()
-        {
-            //this function will output a bunch of the inner variables into a string
-            var s = new List<string>(new string[] { "HaulExplicitlyPosting #",
-                id + "\n",
-                "total inventory records: "+inventory.Count+"\n",
-                "map = "+map.ToString()+"\n"
-            });
-            var inventory_all_items = new List<Thing>();
-            var inventory_readout = new List<string>(new string[] { "Inventory readout:\n" });
-            for (int i = 0; i < inventory.Count; i++)
-            {
-                inventory_all_items = new List<Thing>(inventory_all_items.Concat(inventory[i].items));
-                inventory_readout.Add("  (inventory record " + i + "[" + inventory[i].itemDef.defName + "])\n      ");
-                foreach (var item in inventory[i].items)
-                    inventory_readout.Add(" (" + item + ")");
-            }
-            string coherent = "-";
-            try
-            {
-                var a = new List<string>(items.Select(i => i.ThingID));
-                var b = new List<string>(inventory_all_items.Select(i => i.ThingID));
-                a.Sort();
-                b.Sort();
-                //Log.Message(string.Join(" ", a.ToArray()));
-                //Log.Message(string.Join(" ", b.ToArray()));
-                coherent = a.SequenceEqual(b).ToString();
-                //*if (_same_length_hash(new List<string>(items.Select(i => i.ThingID)))
-                //    .SetEquals(_same_length_hash(new List<string>(inventory_all_items.Select(i => i.ThingID)))))
-                //    coherent = "true";
-                //else
-                //    coherent = "false";*/
-            }
-            catch { coherent = "false (exception)"; }
-            s.Add("Coherent: " + coherent + "\n");
-            //s.Add("items:\n");
-            //foreach (var i in items)
-            //    s.Add("   (" + i + ")");
-            //s.Add("\n");
-            s = new List<string>(s.Concat(inventory_readout));
-            s.Add("\ndestinations:\n");
-            foreach (var r in inventory)
-                foreach (var dest in destinations)
-                    s.Add("  (" + dest + ")");
-            s.Add("\n");
-            //s.Add("inventory:\n");
-            //foreach (var r in inventory)
-            //    s.Add("")
-            return string.Join("", s.ToArray());
-        }
+        }*/
     }
 
     public class HaulExplicitlyJobManager : IExposable

@@ -21,6 +21,7 @@ namespace HaulExplicitly
         //data
         private Dictionary<int, HaulExplicitlyJobManager> managers = new Dictionary<int, HaulExplicitlyJobManager>();
         private HashSet<Zone_Stockpile> retainingZones = new HashSet<Zone_Stockpile>();
+        private ItemMixTypeDatabase itemMixTypeDB = new ItemMixTypeDatabase();
 
         //volatile data
         private static HaulExplicitly _instance;
@@ -53,6 +54,7 @@ namespace HaulExplicitly
                 LookMode.Value, LookMode.Deep//, ref mapIdsScribe, ref managersScribe
                 );
             Scribe_Collections.Look(ref retainingZones, "holdingZones", LookMode.Reference);
+            Scribe_Deep.Look(ref itemMixTypeDB, "itemMixTypeDB");
 
             //hopefully this will allow at least some limited recovery from this issue:
             // https://gist.github.com/HugsLibRecordKeeper/c04dca50bda4e311e81c9e4c9666ccc1
@@ -140,10 +142,12 @@ namespace HaulExplicitly
             manager.postings[posting.id] = posting;
         }
 
-        public static HashSet<Zone_Stockpile> GetRetainingZones()
-        {
-            var self = GetInstance();
-            return self.retainingZones;
+        public static HashSet<Zone_Stockpile> RetainingZones {
+            get { return GetInstance().retainingZones; }
+        }
+
+        public static ItemMixTypeDatabase ItemMixTypeDB {
+            get { return GetInstance().itemMixTypeDB; }
         }
     }
 }
