@@ -6,7 +6,7 @@ using Verse;
 
 namespace HaulExplicitly
 {
-    public class HaulExplicitlyPostingVisualizationDrawer
+    public static class HaulExplicitlyPostingVisualizationDrawer
     {
         private static List<int> postings_drawn_this_frame = new List<int>();
 

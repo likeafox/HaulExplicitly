@@ -8,17 +8,23 @@ using Vector3 = UnityEngine.Vector3;
 using System.Reflection;
 using Harmony;
 
+//try incrementing stacks by 1, using pythoon, and then splitting 1 from stack
+// this is in order to come up with a CLone() function for Thing's.
+// I NEED to make copies of Thing's so I can have ItemMixTypeInfos be completely
+// accur9ate at knowing what mixes.
+//also
+//https://stackoverflow.com/questions/6694508/how-to-use-the-iequalitycomparer
+
 namespace HaulExplicitly
 {
-    public class ItemMixTypeInfo : IExposable
+    public class ItemMixTypeInfo : IExposable, ILoadReferenceable, IEquatable<ItemMixTypeInfo>
     {
         public Thing example;
-        public int id;
-        public ThingDef def, stuffDef, miniDef;
+        public ThingDef def, stuffDef, miniDef;//all this stuff might not even be necessary when
+        // example becomes the ultimate authority, but maybe these ought to become properties instead
 
         public void ExposeData()
         {
-            Scribe_Values.Look(ref id, "id");
             Scribe_Defs.Look(ref def, "def");
             Scribe_Defs.Look(ref stuffDef, "stuffDef");
             Scribe_Defs.Look(ref miniDef, "minifiableDef");
@@ -27,10 +33,18 @@ namespace HaulExplicitly
                 makeExample();
         }
 
+        public string GetUniqueLoadID()
+        {//export example as XML to get the unique load id, when it is authoritative
+            string str = "HE_ItemMixTypeInfo__" + 
+                def.defName + "__" +
+                (stuffDef == null ? "" : stuffDef?.defName) + "__" +
+                (miniDef == null ? "" : miniDef?.defName);
+            return str;
+        }
+
         public ItemMixTypeInfo() { }
         public ItemMixTypeInfo(int id, Thing basis)
         {
-            this.id = id;
             def = basis.def;
             stuffDef = basis.Stuff;
             miniDef = (basis as MinifiedThing)?.InnerThing.def;
@@ -56,6 +70,21 @@ namespace HaulExplicitly
         }
     }
 
+    //just make ItemMixTypeInfo an IEquatable
+    /*public class ItemMixTypeInfoEqualityComparer : IEqualityComparer<ItemMixTypeInfo>
+    {
+        public bool Equals(ItemMixTypeInfo a, ItemMixTypeInfo b)
+        {
+            return a.CanMixIn(b.example);
+        }
+
+        public int GetHashCode(ItemMixTypeInfo o)
+        {
+            var names = new string[] { o.def.defName, o.stuffDef.defName, o.stuffDef.defName };
+            return names.Select(s => (s == null ? "" : s)).Sum(s => s.GetHashCode());
+        }
+    }*/
+
     public class ItemMixTypeDatabase : IExposable
     {
         private List<ItemMixTypeInfo> types = new List<ItemMixTypeInfo>();
@@ -66,11 +95,6 @@ namespace HaulExplicitly
         }
 
         public ItemMixTypeDatabase() { }
-
-        public ItemMixTypeInfo Lookup(int id)
-        {
-            return types[id];
-        }
 
         public ItemMixTypeInfo Lookup(Thing t)
         {
@@ -123,6 +147,11 @@ namespace HaulExplicitly
 
         //methods
         public HaulExplicitlyInventoryRecord() { }
+        public HaulExplicitlyInventoryRecord(ItemMixTypeInfo mixType)
+        {
+            this.mixType = mixType;
+            SelectedQuantity = 0;
+        }
         public HaulExplicitlyInventoryRecord(Thing initial)
         {
             mixType = HaulExplicitly.ItemMixTypeDB.Lookup(initial);
@@ -208,11 +237,11 @@ namespace HaulExplicitly
 
         public void AddItem(Thing t)
         {
-            int mixTypeId = HaulExplicitly.ItemMixTypeDB.Lookup(t).id;
-            if (records.ContainsKey(mixTypeId))
-                records[mixTypeId].AddItem(t);
-            else
-                records[mixTypeId] = new HaulExplicitlyInventoryRecord(t);
+            var mixType = HaulExplicitly.ItemMixTypeDB.Lookup(t);
+            HaulExplicitlyInventoryRecord rec;
+            if (!records.TryGetValue(mixType.id, out rec))
+                rec = records[mixType.id] = new HaulExplicitlyInventoryRecord(mixType);
+            rec.AddItem(t);
         }
 
         public int RemainingToHaul(int mixTypeId)
