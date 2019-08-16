@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq;
 using StackFrame = System.Diagnostics.StackFrame;
 using Harmony;
 using UnityEngine;
@@ -32,6 +33,23 @@ namespace HaulExplicitly
             }
             catch { }
             return mats[path] = MaterialPool.MatFrom(path, ShaderDatabase.MetaOverlay);
+        }
+
+        public static HashSet<string> AllHarmonyPatchOwners()
+        {
+            var result = new HashSet<string>();
+            var GetState = typeof(HarmonySharedState).GetMethod("GetState", BindingFlags.NonPublic | BindingFlags.Static);
+            var state = (Dictionary<MethodBase, byte[]>)GetState.Invoke(null, new object[] { });
+            foreach (byte[] infobytes in state.Values)
+            {
+                var info = PatchInfoSerialization.Deserialize(infobytes);
+                var patches = new Patch[][] { info.prefixes, info.postfixes, info.transpilers }.SelectMany(x => x);
+                foreach (Patch p in patches)
+                {
+                    result.Add(p.owner);
+                }
+            }
+            return result;
         }
     }
 }

@@ -10,15 +10,39 @@ namespace HaulExplicitly
 {
     public static class GizmoUtility
     {
+        private static bool? _rwby_patched = null;
+        private static bool _gave_warning = false;
+
         public static IEnumerable<Gizmo> GetHaulExplicitlyGizmos(Thing t)
         {
             if (t.def.EverHaulable)
             {
-                yield return new Designator_HaulExplicitly();
-                if (Command_Cancel_HaulExplicitly.RelevantToThing(t))
-                    yield return new Command_Cancel_HaulExplicitly(t);
-                if (Command_SelectAllForHaulExplicitly.RelevantToThing(t))
-                    yield return new Command_SelectAllForHaulExplicitly();
+                if (t.Spawned)
+                {
+                    yield return new Designator_HaulExplicitly();
+                    if (Command_Cancel_HaulExplicitly.RelevantToThing(t))
+                        yield return new Command_Cancel_HaulExplicitly(t);
+                    if (Command_SelectAllForHaulExplicitly.RelevantToThing(t))
+                        yield return new Command_SelectAllForHaulExplicitly();
+                }
+                else
+                {
+                    bool rwby_patched;
+                    try
+                    {
+                        rwby_patched = _rwby_patched.Value;
+                    }
+                    catch
+                    {
+                        _rwby_patched = rwby_patched =
+                            MiscUtil.AllHarmonyPatchOwners().Contains("rimworld.carnysenpai.rwbyremnant");
+                    }
+                    if (!rwby_patched && !_gave_warning)
+                    {
+                        Log.Warning("GetGizmos was called on a despawned Thing, which is rather unusual.");
+                        _gave_warning = true;
+                    }
+                }
             }
         }
     }
