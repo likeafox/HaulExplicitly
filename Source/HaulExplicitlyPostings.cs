@@ -6,7 +6,11 @@ using Verse.AI;
 using RimWorld;
 using Vector3 = UnityEngine.Vector3;
 using System.Reflection;
+#if HARMONY_1_2
 using Harmony;
+#elif HARMONY_2_0
+using HarmonyLib;
+#endif
 
 namespace HaulExplicitly
 {

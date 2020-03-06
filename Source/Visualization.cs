@@ -1,7 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+#if HARMONY_1_2
 using Harmony;
+#elif HARMONY_2_0
+using HarmonyLib;
+#endif
 using Verse;
 
 namespace HaulExplicitly

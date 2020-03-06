@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+#if HARMONY_1_2
 using Harmony;
+#elif HARMONY_2_0
+using HarmonyLib;
+#endif
 using Verse;
 using Verse.AI;
 using System.Reflection;

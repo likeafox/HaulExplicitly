@@ -11,7 +11,11 @@ namespace HaulExplicitly
     {
         public Mod(ModContentPack content) : base(content)
         {
+#if HARMONY_1_2
             var harmony = Harmony.HarmonyInstance.Create("likeafox.rimworld.haulexplicitly");
+#elif HARMONY_2_0
+            var harmony = new HarmonyLib.Harmony("likeafox.rimworld.haulexplicitly");
+#endif
             harmony.PatchAll(Assembly.GetExecutingAssembly());
         }
     }

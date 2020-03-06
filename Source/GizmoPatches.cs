@@ -1,6 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+#if HARMONY_1_2
 using Harmony;
+#elif HARMONY_2_0
+using HarmonyLib;
+#endif
 using Verse;
 using RimWorld;
 using UnityEngine;
@@ -52,7 +56,7 @@ namespace HaulExplicitly
         }
     }
 
-    [HarmonyPatch(typeof(Designator_Haul), Harmony.MethodType.Constructor)]
+    [HarmonyPatch(typeof(Designator_Haul), MethodType.Constructor)]
     class Designator_Haul_Constructor_Patch
     {
         static void Postfix(Designator_Haul __instance)
