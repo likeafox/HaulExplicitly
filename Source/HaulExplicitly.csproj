@@ -2,86 +2,40 @@
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Configuration Condition=" '$(Configuration)' == '' ">RW_1_2</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{3EBFEBEA-E0F5-4A87-9DF5-B548DFE535C3}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>HaulExplicitly</RootNamespace>
     <AssemblyName>HaulExplicitly</AssemblyName>
-    <TargetFrameworkVersion Condition=" '$(Configuration)' == 'RW_1_1' ">v4.7.2</TargetFrameworkVersion>
-    <TargetFrameworkVersion Condition=" '$(Configuration)' == 'RW_1_0' ">v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>false</DebugSymbols>
-    <DebugType>none</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>..\Assemblies\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
+    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'RW_1_0|AnyCPU'">
+
+  <PropertyGroup Condition=" '$(Configuration)' == 'RW_1_0'">
+    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <DefineConstants>TRACE;DEBUG;RW_1_0;HARMONY_1_2</DefineConstants>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <!-- custom property: -->
-    <RWVer>1.0</RWVer>
+    <RWVer>1.0</RWVer><!-- (RWVer is a custom property) -->
     <OutputPath>..\Assemblies\</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'RW_1_1|AnyCPU'">
+  <PropertyGroup Condition=" '$(Configuration)' == 'RW_1_1'">
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <DefineConstants>TRACE;DEBUG;RW_1_1;HARMONY_2_0</DefineConstants>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <!-- custom property: -->
     <RWVer>1.1</RWVer>
     <OutputPath>..\$(RWVer)\Assemblies\</OutputPath>
   </PropertyGroup>
-  <!-- -->
-  <ItemGroup>
-    <Reference Include="Assembly-CSharp">
-      <HintPath Condition="'$(Configuration)' == 'RW_1_0'">$(RW_MODDING)\RW_VERSIONS\1.0\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <HintPath Condition="'$(Configuration)' == 'RW_1_1'">$(RW_MODDING)\RW_VERSIONS\1.1\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath Condition="'$(Configuration)' == 'RW_1_0'">$(RW_MODDING)\RW_VERSIONS\1.0\RimWorldWin64_Data\Managed\UnityEngine.dll</HintPath>
-      <HintPath Condition="'$(Configuration)' == 'RW_1_1'">$(RW_MODDING)\RW_VERSIONS\1.1\RimWorldWin64_Data\Managed\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup Condition="'$(Configuration)' == 'RW_1_1'">
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(RW_MODDING)\RW_VERSIONS\$(RWVer)\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.IMGUIModule">
-      <HintPath>$(RW_MODDING)\RW_VERSIONS\$(RWVer)\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.TextrenderingModule">
-      <HintPath>$(RW_MODDING)\RW_VERSIONS\$(RWVer)\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="0Harmony">
-      <HintPath Condition="'$(Configuration)' == 'RW_1_0'">$(RW_MODDING)\Harmony\Release\net35\0Harmony.dll</HintPath>
-      <HintPath Condition="'$(Configuration)' == 'RW_1_1'">$(RW_MODDING)\Harmony\Harmony.2.0.0.8\Release\net472\0Harmony.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'RW_1_2'">
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <DefineConstants>TRACE;DEBUG;RW_1_2;HARMONY_2_0</DefineConstants>
+    <RWVer>1.2</RWVer>
+    <OutputPath>..\$(RWVer)\Assemblies\</OutputPath>
+  </PropertyGroup>
+
+  <!-- References -->
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -89,7 +43,49 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
+
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(RW_MODDING)\RW_VERSIONS\$(RWVer)\RimWorldWin64_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="UnityEngine">
+      <HintPath>$(RW_MODDING)\RW_VERSIONS\$(RWVer)\RimWorldWin64_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
+
+  <Choose>
+    <When Condition="'$(RWVer)' == '1.0'">
+      <ItemGroup>
+        <Reference Include="0Harmony">
+          <HintPath>$(RW_MODDING)\Harmony\Release\net35\0Harmony.dll</HintPath>
+        </Reference>
+      </ItemGroup>
+    </When>
+    <Otherwise>
+      <ItemGroup>
+        <Reference Include="0Harmony">
+          <HintPath Condition="'$(RWVer)' == '1.1'">$(RW_MODDING)\Harmony\Harmony.2.0.0.8\Release\net472\0Harmony.dll</HintPath>
+          <HintPath Condition="'$(RWVer)' == '1.2'">$(RW_MODDING)\Harmony\Harmony.2.0.4.0\net472\0Harmony.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.CoreModule">
+          <HintPath>$(RW_MODDING)\RW_VERSIONS\$(RWVer)\RimWorldWin64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.IMGUIModule">
+          <HintPath>$(RW_MODDING)\RW_VERSIONS\$(RWVer)\RimWorldWin64_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.TextrenderingModule">
+          <HintPath>$(RW_MODDING)\RW_VERSIONS\$(RWVer)\RimWorldWin64_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+      </ItemGroup>
+    </Otherwise>
+  </Choose>
+
+
   <ItemGroup>
     <Compile Include="GizmoPatches.cs" />
     <Compile Include="Gizmos.cs" />
@@ -106,10 +102,10 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PostBuildEvent>py "$(RW_MODDING)\Publisher\publisher.py" "$(MSBuildProjectDirectory)\.."</PostBuildEvent>
+    <PostBuildEvent>py "$(RW_MODDING)\Tools\Publisher\publisher.py" "$(MSBuildProjectDirectory)\.."</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>py "$(RW_MODDING)\version_numberer.py" "$(MSBuildProjectDirectory)"</PreBuildEvent>
+    <PreBuildEvent>py "$(RW_MODDING)\Tools\version_numberer.py" "$(MSBuildProjectDirectory)"</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
