@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 #if HARMONY_1_2
 using Harmony;
 #elif HARMONY_2_0
@@ -203,8 +204,24 @@ namespace HaulExplicitly
     {
         static void Prefix(ref Predicate<Thing> extraValidator)
         {
-            if (MiscUtil.StackFrameWithMethod("JobDriver_HaulToCell") == null)
+            const string sf_namepart =
+#if RW_1_0
+                "JobDriver_HaulToCell";
+#else
+                "<MakeNewToils>";
+#endif
+            System.Diagnostics.StackFrame sf = MiscUtil.StackFrameWithMethod(sf_namepart, 3);
+            if (sf == null)
                 return;
+#if !RW_1_0
+            var locals = sf.GetMethod().GetMethodBody().LocalVariables;
+            bool driverInLocals = locals.Select(l => l.LocalType)
+                                        .Where(lt => lt == typeof(Verse.AI.JobDriver_HaulToCell))
+                                        .Any();
+            if (!driverInLocals)
+                return;
+#endif
+
             var other_test = extraValidator;
             Predicate<Thing> test = delegate (Thing t)
             {

@@ -62,7 +62,7 @@ namespace HaulExplicitly
             UnfinishedThing unfinishedThing = t as UnfinishedThing;
             if ((unfinishedThing != null && unfinishedThing.BoundBill != null)
                 || !pawn.CanReach(t, PathEndMode.ClosestTouch, pawn.NormalMaxDanger(),
-                    false, TraverseMode.ByPawn)
+                    mode: TraverseMode.ByPawn)
                 || !pawn.CanReserve(t, 1, -1, null, forced))
                 return false;
             if (t.IsBurning())
@@ -262,12 +262,12 @@ namespace HaulExplicitly
                 //get alllll the vars
                 Pawn actor = toil.actor;
                 Thing carriedItem = actor.carryTracker.CarriedThing;
-                int carryBeforeCount = carriedItem.stackCount;
                 if (carriedItem == null)
                 {
-                    Log.Error(actor + " tried to place hauled thing in cell but is not hauling anything.", false);
+                    Log.Error(actor + " tried to place hauled thing in cell but is not hauling anything.");
                     return;
                 }
+                int carryBeforeCount = carriedItem.stackCount;
                 Job job = actor.CurJob;
                 var driver = (JobDriver_HaulExplicitly)actor.jobs.curDriver;
                 driver.init();//this fixes problems
