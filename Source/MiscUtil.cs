@@ -15,14 +15,17 @@ namespace HaulExplicitly
 {
     public static class MiscUtil
     {
-        public static StackFrame StackFrameWithMethod(string str, int steps = 2)
+        public static StackFrame StackFrameWithMethod(string str, int steps = 2, bool debugPrintNames = false)
         {
             for (int i = 2; i < 2 + steps; i++)
             {
                 StackFrame sf = new StackFrame(i, false);
                 MethodBase caller = sf.GetMethod();
                 if (caller == null) return null;
-                if (caller.FullDescription().Contains(str))
+                string description = caller.FullDescription();
+                if (debugPrintNames)
+                    Log.Message((i - 1).ToString() + " " + description);
+                if (description.Contains(str))
                     return sf;
             }
             return null;

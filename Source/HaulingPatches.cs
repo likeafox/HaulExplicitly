@@ -199,6 +199,7 @@ namespace HaulExplicitly
         }
     }
 
+#if RW_1_0 || RW_1_1 || RW_1_2
     [HarmonyPatch(typeof(Toils_Haul), "CheckForGetOpportunityDuplicate")]
     class Toils_Haul_CheckForGetOpportunityDuplicate_Patch
     {
@@ -231,4 +232,59 @@ namespace HaulExplicitly
             extraValidator = test;
         }
     }
+#endif
+
+#if RW_1_3
+    [HarmonyPatch]
+    class JobDriver_HaulToCell_MakeNewToils_Patch
+    {
+        [HarmonyTargetMethod]
+        public static MethodBase Get_MakeNewToils_MoveNext()
+        {
+            Type makenewtoils = typeof(JobDriver_HaulToCell).GetNestedTypes(AccessTools.all)
+                .First(t => t.Name.Contains("MakeNewToils"));
+            return AccessTools.Method(makenewtoils, "MoveNext");
+        }
+
+        private static Predicate<Thing> validator = HaulablesUtilities.IsAHaulableSetToHaulable;
+
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
+        {
+            int patch_count = 0;
+            CodeInstruction[] queue = { null, null };
+            IEnumerator<CodeInstruction> inst_enum = instructions.GetEnumerator();
+            inst_enum.MoveNext();
+            queue[0] = inst_enum.Current;
+            inst_enum.MoveNext();
+            queue[1] = inst_enum.Current;
+
+            while (queue[0] != null)
+            {
+                if (queue[1]?.Calls(typeof(Toils_Haul).GetMethod("CheckForGetOpportunityDuplicate")) == true)
+                {
+                    if (queue[0].opcode != System.Reflection.Emit.OpCodes.Ldnull)
+                        Log.Error("Replacing existing validator");
+                    var fld = typeof(JobDriver_HaulToCell_MakeNewToils_Patch).GetField("validator", AccessTools.all);
+                    yield return new CodeInstruction(System.Reflection.Emit.OpCodes.Ldsfld, fld);
+                    patch_count++;
+                }
+                else
+                {
+                    yield return queue[0];
+                }
+
+                queue[0] = queue[1];
+                if (inst_enum.MoveNext())
+                    queue[1] = inst_enum.Current;
+                else
+                    queue[1] = null;
+            }
+
+            if (patch_count != 1)
+                Log.Error("Patch logic invoked non-1 times: " + patch_count.ToString());
+        }
+    }
+#endif
+
 }
