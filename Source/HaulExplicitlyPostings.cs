@@ -8,7 +8,7 @@ using Vector3 = UnityEngine.Vector3;
 using System.Reflection;
 #if HARMONY_1_2
 using Harmony;
-#elif HARMONY_2_0
+#elif HARMONY_2
 using HarmonyLib;
 #endif
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 #if HARMONY_1_2
 using Harmony;
-#elif HARMONY_2_0
+#elif HARMONY_2
 using HarmonyLib;
 #endif
 using Verse;

@@ -13,7 +13,7 @@ namespace HaulExplicitly
         {
 #if HARMONY_1_2
             var harmony = Harmony.HarmonyInstance.Create("likeafox.rimworld.haulexplicitly");
-#elif HARMONY_2_0
+#elif HARMONY_2
             var harmony = new HarmonyLib.Harmony("likeafox.rimworld.haulexplicitly");
 #endif
             harmony.PatchAll(Assembly.GetExecutingAssembly());

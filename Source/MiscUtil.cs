@@ -5,7 +5,7 @@ using System.Linq;
 using StackFrame = System.Diagnostics.StackFrame;
 #if HARMONY_1_2
 using Harmony;
-#elif HARMONY_2_0
+#elif HARMONY_2
 using HarmonyLib;
 #endif
 using UnityEngine;
@@ -59,7 +59,7 @@ namespace HaulExplicitly
             var result = new HashSet<string>();
 #if HARMONY_1_2
             string harmony_namespace = "Harmony";
-#elif HARMONY_2_0
+#elif HARMONY_2
             string harmony_namespace = "HarmonyLib";
 #endif
             var GetState = HarmonyAssembly.GetType(harmony_namespace + ".HarmonySharedState").GetMethod("GetState", BindingFlags.NonPublic | BindingFlags.Static);
@@ -68,14 +68,14 @@ namespace HaulExplicitly
             {
 #if HARMONY_1_2
                 var Deserialize_flags = BindingFlags.Public | BindingFlags.Static;
-#elif HARMONY_2_0
+#elif HARMONY_2
                 var Deserialize_flags = BindingFlags.NonPublic | BindingFlags.Static;
 #endif
                 var Deserialize = HarmonyAssembly.GetType(harmony_namespace + ".PatchInfoSerialization").GetMethod("Deserialize", Deserialize_flags);
                 var info = (PatchInfo)Deserialize.Invoke(null, new object[] { infobytes });
 #if HARMONY_1_2
                 var patches = new Patch[][] { info.prefixes, info.postfixes, info.transpilers }.SelectMany(x => x);
-#elif HARMONY_2_0
+#elif HARMONY_2
                 var patches = new Patch[][] { info.prefixes, info.postfixes, info.transpilers, info.finalizers }.SelectMany(x => x);
 #endif
                 foreach (Patch p in patches)
