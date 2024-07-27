@@ -651,7 +651,7 @@ namespace HaulExplicitly
         {
             if (posting == null) //do the handholdy version of this function
             {
-                posting = HaulExplicitly.GetManager(item.Map).PostingWithItem(item);
+                posting = HaulExplicitly.GetManager(item).PostingWithItem(item);
                 if (posting == null)
                     throw new ArgumentException();
             }

@@ -17,7 +17,7 @@ namespace HaulExplicitly
 
         public override IEnumerable<Thing> PotentialWorkThingsGlobal(Pawn pawn)
         {
-            return HaulExplicitly.GetManager(pawn.Map).haulables;
+            return HaulExplicitly.GetManager(pawn).haulables;
         }
 
         public override bool ShouldSkip(Pawn pawn, bool forced = false)
@@ -31,7 +31,7 @@ namespace HaulExplicitly
                 return null;
 
             //plan count and dests
-            HaulExplicitlyPosting posting = HaulExplicitly.GetManager(t.Map).PostingWithItem(t);
+            HaulExplicitlyPosting posting = HaulExplicitly.GetManager(t).PostingWithItem(t);
             if (posting == null)
                 return null;
             int space_request = AmountPawnWantsToPickUp(pawn, t, posting);

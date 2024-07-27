@@ -118,6 +118,22 @@ namespace HaulExplicitly
             return null;
         }
 
+        public static HaulExplicitlyJobManager GetManager(Thing t)
+        {
+#if RW_1_4_OR_GREATER
+            if (t is Verse.Pawn)
+            {
+                return GetManager(t.Map);
+            }
+            else
+            {
+                return GetManager(t.MapHeld);
+            }
+#else
+            return GetManager(t.Map);
+#endif
+        }
+
         public static List<HaulExplicitlyJobManager> GetManagers()
         {
             var self = GetInstance();

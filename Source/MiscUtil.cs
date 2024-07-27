@@ -57,32 +57,32 @@ namespace HaulExplicitly
         public static HashSet<string> AllHarmonyPatchOwners()
         {
             var result = new HashSet<string>();
-#if HARMONY_1_2
+#if HARMONY_2
+            foreach (MethodBase original in Harmony.GetAllPatchedMethods())
+            {
+                var info = Harmony.GetPatchInfo(original);
+                foreach (string owner in info.Owners)
+                {
+                    result.Add(owner);
+                }
+            }
+#elif HARMONY_1_2
             string harmony_namespace = "Harmony";
-#elif HARMONY_2
-            string harmony_namespace = "HarmonyLib";
-#endif
             var GetState = HarmonyAssembly.GetType(harmony_namespace + ".HarmonySharedState").GetMethod("GetState", BindingFlags.NonPublic | BindingFlags.Static);
             var state = (Dictionary<MethodBase, byte[]>)GetState.Invoke(null, new object[] { });
             foreach (byte[] infobytes in state.Values)
             {
-#if HARMONY_1_2
-                var Deserialize_flags = BindingFlags.Public | BindingFlags.Static;
-#elif HARMONY_2
-                var Deserialize_flags = BindingFlags.NonPublic | BindingFlags.Static;
-#endif
-                var Deserialize = HarmonyAssembly.GetType(harmony_namespace + ".PatchInfoSerialization").GetMethod("Deserialize", Deserialize_flags);
+                var Deserialize = HarmonyAssembly.GetType(harmony_namespace + ".PatchInfoSerialization").GetMethod(
+                    "Deserialize", BindingFlags.Public | BindingFlags.Static
+                    );
                 var info = (PatchInfo)Deserialize.Invoke(null, new object[] { infobytes });
-#if HARMONY_1_2
                 var patches = new Patch[][] { info.prefixes, info.postfixes, info.transpilers }.SelectMany(x => x);
-#elif HARMONY_2
-                var patches = new Patch[][] { info.prefixes, info.postfixes, info.transpilers, info.finalizers }.SelectMany(x => x);
-#endif
                 foreach (Patch p in patches)
                 {
                     result.Add(p.owner);
                 }
             }
+#endif
             return result;
         }
     }

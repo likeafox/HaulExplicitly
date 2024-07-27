@@ -18,7 +18,7 @@ namespace HaulExplicitly
 
         public static void DrawForItem(Thing item)
         {
-            var mgr = HaulExplicitly.GetManager(item.Map);
+            var mgr = HaulExplicitly.GetManager(item);
             HaulExplicitlyPosting posting = mgr.PostingWithItem(item);
             if (posting == null)
                 return;

@@ -10,20 +10,25 @@ namespace HaulExplicitly
 {
     public static class GizmoUtility
     {
+#if !RW_1_4_OR_GREATER
         private static bool? _rwby_patched = null;
         private static bool _gave_warning = false;
+#endif
 
         public static IEnumerable<Gizmo> GetHaulExplicitlyGizmos(Thing t)
         {
             if (t.def.EverHaulable)
             {
+#if !RW_1_4_OR_GREATER
                 if (t.Spawned)
                 {
+#endif
                     yield return new Designator_HaulExplicitly();
                     if (Command_Cancel_HaulExplicitly.RelevantToThing(t))
                         yield return new Command_Cancel_HaulExplicitly(t);
                     if (Command_SelectAllForHaulExplicitly.RelevantToThing(t))
                         yield return new Command_SelectAllForHaulExplicitly();
+#if !RW_1_4_OR_GREATER
                 }
                 else
                 {
@@ -43,6 +48,7 @@ namespace HaulExplicitly
                         _gave_warning = true;
                     }
                 }
+#endif
             }
         }
     }
@@ -243,7 +249,7 @@ namespace HaulExplicitly
             if (posting != null)
             {
                 posting.TryRemoveItem(thing, true);
-                foreach (Pawn p in Find.CurrentMap.mapPawns.PawnsInFaction(Faction.OfPlayer))
+                foreach (Pawn p in Find.CurrentMap.mapPawns.PawnsInFaction(Faction.OfPlayer).ListFullCopy())
                 {
                     var jobs = new List<Job>(p.jobs.jobQueue.AsEnumerable().Select(j => j.job));
                     if (p.CurJob != null) jobs.Add(p.CurJob);
@@ -259,8 +265,7 @@ namespace HaulExplicitly
 
         public static bool RelevantToThing(Thing t)
         {
-            var mgr = HaulExplicitly.GetManager(t.Map);
-            return mgr.PostingWithItem(t) != null;
+            return HaulExplicitly.GetManager(t).PostingWithItem(t) != null;
         }
     }
 
@@ -280,18 +285,24 @@ namespace HaulExplicitly
             Selector selector = Find.Selector;
             List<object> selection = selector.SelectedObjects;
             Thing example = (Thing)selection.First();
-            HaulExplicitlyPosting posting = HaulExplicitly.GetManager(example.Map).PostingWithItem(example);
+            HaulExplicitlyPosting posting = HaulExplicitly.GetManager(example).PostingWithItem(example);
             foreach (object o in posting.items)
             {
                 Thing t = o as Thing;
-                if (!selection.Contains(o) && t != null && t.Spawned)
+                if (!selection.Contains(o) && t != null &&
+#if RW_1_4_OR_GREATER
+                    t.SpawnedOrAnyParentSpawned
+#else
+                    t.Spawned
+#endif
+                    )
                     selector.Select(o);
             }
         }
 
         public static bool RelevantToThing(Thing t)
         {
-            var mgr = HaulExplicitly.GetManager(t.Map);
+            var mgr = HaulExplicitly.GetManager(t);
             HaulExplicitlyPosting posting = mgr.PostingWithItem(t);
             if (posting == null)
                 return false;
@@ -301,7 +312,13 @@ namespace HaulExplicitly
                 if (other == null || !posting.items.Contains(other))
                     return false;
             }
-            return Find.Selector.SelectedObjects.Count < posting.items.Count(i => i.Spawned);
+            return Find.Selector.SelectedObjects.Count < posting.items.Count(i =>
+#if RW_1_4_OR_GREATER
+                i.SpawnedOrAnyParentSpawned
+#else
+                i.Spawned
+#endif
+                );
         }
     }
 }

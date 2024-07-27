@@ -42,13 +42,13 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'RW_1_4'">
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <DefineConstants>TRACE;DEBUG;RW_1_4;HARMONY_2</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;RW_1_4;HARMONY_2;RW_1_4_OR_GREATER</DefineConstants>
     <RWVer>1.4</RWVer>
     <OutputPath>..\$(RWVer)\Assemblies\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'RW_1_5'">
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <DefineConstants>TRACE;DEBUG;RW_1_5;HARMONY_2</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;RW_1_5;HARMONY_2;RW_1_4_OR_GREATER</DefineConstants>
     <RWVer>1.5</RWVer>
     <OutputPath>..\$(RWVer)\Assemblies\</OutputPath>
   </PropertyGroup>
