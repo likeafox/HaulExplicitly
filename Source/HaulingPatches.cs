@@ -182,7 +182,15 @@ namespace HaulExplicitly
                     (List<Toil>)typeof(JobDriver).InvokeMember("toils",
                     BindingFlags.GetField | BindingFlags.Instance | BindingFlags.NonPublic,
                     null, __instance, null);
-                Toil toilGoto = toils[1];
+                Toil toilGoto = toils[
+#if !RW_1_4_OR_GREATER
+                        1
+#elif RW_1_4
+                        3
+#elif RW_1_5
+                        4
+#endif
+                    ];
                 if (toilGoto.defaultCompleteMode != ToilCompleteMode.PatherArrival)
                 {
                     Log.Error("Trying to add fail condition on JobDriver_HaulToCell but "
@@ -234,7 +242,7 @@ namespace HaulExplicitly
     }
 #endif
 
-#if RW_1_3
+#if RW_1_3 || RW_1_4 || RW_1_5
     [HarmonyPatch]
     class JobDriver_HaulToCell_MakeNewToils_Patch
     {
