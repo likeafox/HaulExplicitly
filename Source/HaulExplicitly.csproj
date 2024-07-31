@@ -2,7 +2,8 @@
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">RW_1_2</Configuration>
+    <Version>1.2</Version><!-- (This property is readable by version numberer script) -->
+    <Configuration Condition=" '$(Configuration)' == '' ">RW_1_4</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{3EBFEBEA-E0F5-4A87-9DF5-B548DFE535C3}</ProjectGuid>
     <OutputType>Library</OutputType>
@@ -85,7 +86,8 @@
         <Reference Include="0Harmony">
           <HintPath Condition="'$(RWVer)' == '1.1'">$(RW_MODDING)\Harmony\Harmony.2.0.0.8\Release\net472\0Harmony.dll</HintPath>
           <HintPath Condition="('$(RWVer)' == '1.2') Or ('$(RWVer)' == '1.3')">$(RW_MODDING)\Harmony\Harmony.2.0.4.0\net472\0Harmony.dll</HintPath>
-          <HintPath Condition="('$(RWVer)' == '1.4') Or ('$(RWVer)' == '1.5')">$(RW_MODDING)\Harmony\Harmony.2.3.3.0\net472\0Harmony.dll</HintPath>
+          <HintPath Condition="'$(RWVer)' == '1.4'">$(RW_MODDING)\Harmony\Harmony.2.2.2.0\net472\0Harmony.dll</HintPath>
+          <HintPath Condition="'$(RWVer)' == '1.5'">$(RW_MODDING)\Harmony\Harmony.2.3.3.0\net472\0Harmony.dll</HintPath>
           <Private>False</Private>
         </Reference>
         <Reference Include="UnityEngine.CoreModule">
@@ -124,7 +126,7 @@
     <PostBuildEvent>py "$(RW_MODDING)\Tools\Publisher\publisher.py" "$(MSBuildProjectDirectory)\.."</PostBuildEvent>
   </PropertyGroup>
   <PropertyGroup>
-    <PreBuildEvent>py "$(RW_MODDING)\Tools\version_numberer.py" "$(MSBuildProjectDirectory)"</PreBuildEvent>
+    <PreBuildEvent>py "$(RW_MODDING)\Tools\version_numberer_2.py" "$(RWver)" "$(MSBuildProjectDirectory)\.."</PreBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

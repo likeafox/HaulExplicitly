@@ -18,12 +18,24 @@ namespace HaulExplicitly
 
         public static void DrawForItem(Thing item)
         {
+#if RW_1_4_OR_GREATER
+            // for now, I don't want to draw lines for selected carried items. May change in the future.
+            // Also note that this makes the later .PositionHeld/.Position distinction irrelevant
+            if (!item.Spawned)
+                return;
+#endif
             var mgr = HaulExplicitly.GetManager(item);
             HaulExplicitlyPosting posting = mgr.PostingWithItem(item);
             if (posting == null)
                 return;
             //draw line
-            Vector3 start = item.Position.ToVector3ShiftedWithAltitude(alt);
+            Vector3 start = item
+#if RW_1_4_OR_GREATER
+                .PositionHeld
+#else
+                .Position
+#endif
+                .ToVector3ShiftedWithAltitude(alt);
             Vector3 circle_center = posting.center;
             circle_center.y = alt;
             Vector3 line_vector = circle_center - start;
