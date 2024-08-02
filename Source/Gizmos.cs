@@ -249,7 +249,12 @@ namespace HaulExplicitly
             if (posting != null)
             {
                 posting.TryRemoveItem(thing, true);
-                foreach (Pawn p in Find.CurrentMap.mapPawns.PawnsInFaction(Faction.OfPlayer).ListFullCopy())
+                foreach (Pawn p in Find.CurrentMap.mapPawns.PawnsInFaction(Faction.OfPlayer)
+#if RW_1_0
+                    .ToList())
+#else
+                    .ListFullCopy())
+#endif
                 {
                     var jobs = new List<Job>(p.jobs.jobQueue.AsEnumerable().Select(j => j.job));
                     if (p.CurJob != null) jobs.Add(p.CurJob);
